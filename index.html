@@ -231,87 +231,8 @@
   </div>
   <script>
     // ========== PRODUCT DATA ==========
-    // Add more products by adding objects to this array
-    const products = [
-      {
-        name: "Echo Dot (4th Gen) Smart Speaker",
-        price: "$49.99",
-        priceNum: 49.99,
-        rating: 4.7,
-        reviews: 387452,
-        description: "Slimme luidspreker met Alexa. Verbeterd geluid, slim design en eenvoudige bediening voor je hele huis.",
-        image: null,
-        icon: "speaker",
-        brand: "Amazon",
-        category: "Smart Home",
-        affiliate_link: "https://www.amazon.com/dp/B08N5WRWNW?tag=YOURAFFILIATEID"
-      },
-      {
-        name: "Fire TV Stick 4K Max",
-        price: "$54.99",
-        priceNum: 54.99,
-        rating: 4.6,
-        reviews: 214893,
-        description: "Snelste streaming in 4K met Wi-Fi 6 ondersteuning. Geniet van je favoriete films en series in ultra HD.",
-        image: null,
-        icon: "tv",
-        brand: "Amazon",
-        category: "Entertainment",
-        affiliate_link: "https://www.amazon.com/dp/B09G3HRMVB?tag=YOURAFFILIATEID"
-      },
-      {
-        name: "Kindle Paperwhite (11th Gen)",
-        price: "$139.99",
-        priceNum: 139.99,
-        rating: 4.8,
-        reviews: 95231,
-        description: "E-reader met 6.8\" scherm, warm licht en tot 10 weken batterijduur. Waterdicht en licht.",
-        image: null,
-        icon: "book-open",
-        brand: "Amazon",
-        category: "Entertainment",
-        affiliate_link: "https://www.amazon.com/dp/B08KTZ8249?tag=YOURAFFILIATEID"
-      },
-      {
-        name: "Ring Video Doorbell 4",
-        price: "$199.99",
-        priceNum: 199.99,
-        rating: 4.5,
-        reviews: 48762,
-        description: "Slimme videodeurbel met verbeterde Pre-Roll. Bekijk wie er voor de deur staat, waar je ook bent.",
-        image: null,
-        icon: "bell",
-        brand: "Ring",
-        category: "Smart Home",
-        affiliate_link: "https://www.amazon.com/dp/B09WZBPX7K?tag=YOURAFFILIATEID"
-      },
-      {
-        name: "Sony WH-1000XM5 Koptelefoon",
-        price: "$348.00",
-        priceNum: 348.00,
-        rating: 4.6,
-        reviews: 32150,
-        description: "Toonaangevende noise-cancelling koptelefoon met kristalhelder geluid en 30 uur batterijduur.",
-        image: null,
-        icon: "headphones",
-        brand: "Sony",
-        category: "Audio",
-        affiliate_link: "https://www.amazon.com/dp/B09XS7JWHH?tag=YOURAFFILIATEID"
-      },
-      {
-        name: "Blink Mini Indoor Camera",
-        price: "$34.99",
-        priceNum: 34.99,
-        rating: 4.4,
-        reviews: 178430,
-        description: "Compacte beveiligingscamera voor binnen. 1080p HD video, nachtzicht en tweerichtingsaudio.",
-        image: null,
-        icon: "camera",
-        brand: "Blink",
-        category: "Smart Home",
-        affiliate_link: "https://www.amazon.com/dp/B07X6C9RMF?tag=YOURAFFILIATEID"
-      }
-    ];
+    // Dynamically fetched from Google Apps Script
+    let products = [];
 
     // ========== ICON MAP ==========
     const iconMap = {
@@ -350,14 +271,15 @@
       "Smart Home": { bg: "#F5F0EB", text: "#8B6F47", iconBg: "linear-gradient(135deg, #EFE6D9, #E8D7C3)" },
       "Entertainment": { bg: "#FBF8F3", text: "#8B6F47", iconBg: "linear-gradient(135deg, #F9F1E5, #F3E9D8)" },
       "Audio": { bg: "#F8F4EE", text: "#8B6F47", iconBg: "linear-gradient(135deg, #F6EFE5, #F1E8D8)" },
+      "General": { bg: "#F3F4F6", text: "#374151", iconBg: "linear-gradient(135deg, #E5E7EB, #D1D5DB)" }
     };
 
     // ========== RENDER PRODUCTS ==========
     let activeFilter = "Alle";
 
     function getCategories() {
-      const cats = new Set(products.map(p => p.category));
-      return ["Alle", ...cats];
+      const cats = new Set(products.map(p => p.Categorie || "General"));
+      return ["Alle", ...Array.from(cats).sort()];
     }
 
     function renderFilters() {
@@ -381,43 +303,46 @@
 
     function renderProducts() {
       const grid = document.getElementById('product-grid');
-      const filtered = activeFilter === "Alle" ? products : products.filter(p => p.category === activeFilter);
+      const filtered = activeFilter === "Alle" ? products : products.filter(p => p.Categorie || "General");
 
       grid.innerHTML = filtered.map((p, i) => {
-        const colors = categoryColors[p.category] || { bg: "#F3F4F6", text: "#374151", iconBg: "linear-gradient(135deg, #E5E7EB, #D1D5DB)" };
+        const category = p.Categorie || "General";
+        const colors = categoryColors[category] || { bg: "#F3F4F6", text: "#374151", iconBg: "linear-gradient(135deg, #E5E7EB, #D1D5DB)" };
+        const imageUrl = p.ImageURL || "";
+        const fallbackBg = colors.iconBg;
+
         return `
-        <div class="product-card animate-in delay-${i + 1} rounded overflow-hidden" style="background-color: #FFFFFF; border: 1px solid #E8E8E8;">
+        <div class="product-card animate-in delay-${Math.min(i + 1, 6)} rounded overflow-hidden" style="background-color: #FFFFFF; border: 1px solid #E8E8E8;">
           <!-- Image Area -->
-          <div class="relative h-48 sm:h-56 flex items-center justify-center" style="background: ${colors.iconBg};">
-            <div style="color: ${colors.text}; opacity: 0.7;">
-              ${iconMap[p.icon] || iconMap.speaker}
-            </div>
+          <div class="relative h-48 sm:h-56 flex items-center justify-center" style="background: ${fallbackBg}; overflow: hidden;">
+            ${imageUrl ? `<img src="${imageUrl}" alt="${p.ProductNaam}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';">` : ''}
             <!-- Category Badge -->
             <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-semibold" style="background-color: ${colors.bg}; color: ${colors.text};">
-              ${p.category}
+              ${category}
             </span>
             <!-- Price Badge -->
             <span class="absolute top-3 right-3 px-3 py-1 rounded text-xs font-bold" style="background-color: #C9A84C; color: #FFFFFF;">
-              ${p.price}
+              ${p.Prijs}
             </span>
             <!-- Hover Overlay -->
             <div class="card-overlay absolute inset-0 flex items-end p-4" style="background: linear-gradient(to top, rgba(0,0,0,0.75), transparent 70%);">
-              <p class="text-xs leading-relaxed" style="color: #FFFFFF;">${p.description}</p>
+              <p class="text-xs leading-relaxed" style="color: #FFFFFF;">${p.Beschrijving || p.ProductTitel}</p>
             </div>
           </div>
           
           <!-- Content -->
           <div class="p-4 sm:p-5">
             <div class="flex items-center gap-1.5 mb-2">
-              <span class="text-[10px] font-medium px-2 py-0.5 rounded" style="background-color: #F5F5F5; color: #999999;">${p.brand}</span>
+              <span class="text-[10px] font-medium px-2 py-0.5 rounded" style="background-color: #F5F5F5; color: #999999;">${p.Verkoper}</span>
             </div>
-            <h3 class="font-heading font-semibold text-sm sm:text-base leading-snug mb-2 line-clamp-2" style="color: #000000;">${p.name}</h3>
+            <h3 class="font-heading font-semibold text-sm sm:text-base leading-snug mb-1 line-clamp-2" style="color: #000000;">${p.ProductNaam}</h3>
+            <p class="text-xs mb-3 line-clamp-1" style="color: #999999;">${p.ProductTitel}</p>
             <div class="flex items-center gap-2 mb-4">
-              <div class="flex items-center gap-0.5">${renderStars(p.rating)}</div>
-              <span class="text-xs font-medium" style="color: #666666;">${p.rating}</span>
-              <span class="text-xs" style="color: #CCCCCC;">(${formatReviews(p.reviews)})</span>
+              <div class="flex items-center gap-0.5">${renderStars(p.Beoordeling)}</div>
+              <span class="text-xs font-medium" style="color: #666666;">${p.Beoordeling}</span>
+              <span class="text-xs" style="color: #CCCCCC;">(${p.AantalBeoordelingen})</span>
             </div>
-            <a href="${p.affiliate_link}" target="_blank" rel="noopener noreferrer" class="cta-btn flex items-center justify-center gap-2 w-full py-2.5 sm:py-3 rounded text-xs sm:text-sm font-semibold uppercase tracking-wide" style="background-color: #C9A84C; color: #FFFFFF;">
+            <a href="${p.Link}" target="_blank" rel="noopener noreferrer" class="cta-btn flex items-center justify-center gap-2 w-full py-2.5 sm:py-3 rounded text-xs sm:text-sm font-semibold uppercase tracking-wide" style="background-color: #C9A84C; color: #FFFFFF;">
               <i data-lucide="external-link" style="width:14px;height:14px;"></i>
               <span class="cta-text">Shop on Amazon</span>
             </a>
@@ -550,10 +475,74 @@
       });
     }
 
+    // ========== GOOGLE DRIVE API ==========
+    const DRIVE_API_KEY = 'AIzaSyAyDZqnPrQjHJM5K5xh-qMcG3H_TeRFbiw';
+    const ROOT_FOLDER_ID = '16zI9i7TVshC7YapQBEe1XzX10i4TqBzq';
+
+    async function getImageUrlFromDrive(folderName) {
+      try {
+        // First, find the subfolder matching folderName
+        const searchQuery = encodeURIComponent(`'${ROOT_FOLDER_ID}' in parents and name='${folderName}' and mimeType='application/vnd.google-apps.folder'`);
+        const foldersResponse = await fetch(`https://www.googleapis.com/drive/v3/files?q=${searchQuery}&key=${DRIVE_API_KEY}&fields=files(id,name)`);
+        const foldersData = await foldersResponse.json();
+
+        if (!foldersData.files || foldersData.files.length === 0) {
+          console.warn(`Folder not found for: ${folderName}`);
+          return null;
+        }
+
+        const subFolderId = foldersData.files[0].id;
+
+        // Then, get the first image file from that subfolder
+        const imageQuery = encodeURIComponent(`'${subFolderId}' in parents and mimeType contains 'image/'`);
+        const imagesResponse = await fetch(`https://www.googleapis.com/drive/v3/files?q=${imageQuery}&key=${DRIVE_API_KEY}&fields=files(id,name,mimeType)&pageSize=1`);
+        const imagesData = await imagesResponse.json();
+
+        if (!imagesData.files || imagesData.files.length === 0) {
+          console.warn(`No image found in folder: ${folderName}`);
+          return null;
+        }
+
+        const fileId = imagesData.files[0].id;
+        return `https://drive.google.com/uc?export=view&id=${fileId}`;
+      } catch (error) {
+        console.error(`Error fetching image for ${folderName}:`, error);
+        return null;
+      }
+    }
+
     // ========== INIT ==========
-    renderFilters();
-    renderProducts();
+    async function fetchAndRenderProducts() {
+      const loadingGrid = document.getElementById('product-grid');
+      loadingGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999999;">Producten laden...</div>';
+
+      try {
+        const response = await fetch('https://script.google.com/macros/s/AKfycby7euMT--z-aZ3fyYWEsDbw9oD77lQqiQiVM0MSLdkjzfAjoFeRmX8Drf6zfZg9AO1U/exec');
+        if (!response.ok) throw new Error('Fout bij laden van producten');
+
+        products = await response.json();
+        if (!Array.isArray(products)) products = [];
+
+        // Fetch images from Google Drive for each product
+        for (let product of products) {
+          if (product.FolderNaam) {
+            const imageUrl = await getImageUrlFromDrive(product.FolderNaam);
+            if (imageUrl) {
+              product.ImageURL = imageUrl;
+            }
+          }
+        }
+
+        renderFilters();
+        renderProducts();
+      } catch (error) {
+        console.error('Fout bij laden:', error);
+        loadingGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #CC0000;">Kan producten niet laden. Probeer later opnieuw.</div>';
+      }
+    }
+
+    fetchAndRenderProducts();
     lucide.createIcons();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9def3454b3930b07',t:'MTc3Mzk1MTkwNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9def5cbc82266676',t:'MTc3Mzk1MzU2MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
